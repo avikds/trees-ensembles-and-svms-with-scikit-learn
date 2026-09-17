@@ -143,3 +143,42 @@ def pruned_tree(X, y, cv):
 
     return fit_tree(X, y, ccp_alpha=alpha)
 
+# Step 4 - bagging_and_forests
+from sklearn.ensemble import BaggingRegressor, RandomForestRegressor
+
+def bagging(X, y, n_estimators=200):
+    # Fit a bagging ensemble using decision trees as the base estimator.
+    model = BaggingRegressor(
+        DecisionTreeRegressor(random_state=0),
+        n_estimators=n_estimators,
+        oob_score=True,
+        random_state=0
+    )
+
+    return model.fit(X, y)
+
+def random_forest(X, y, max_features, n_estimators=200):
+    # Fit a random forest with the specified maximum number/fraction of features.
+    model = RandomForestRegressor(
+        n_estimators=n_estimators,
+        max_features=max_features,
+        oob_score=True,
+        random_state=0
+    )
+
+    return model.fit(X, y)
+
+def oob_rmse(model, y):
+    # Compute RMSE using the out-of-bag predictions.
+    return round(
+        np.sqrt(mean_squared_error(y, model.oob_prediction_)),
+        3
+    )
+
+def oob_by_max_features(X, y, options):
+    # Fit a random forest for each max_features option and record its OOB RMSE.
+    return {
+        option: oob_rmse(random_forest(X, y, option), y)
+        for option in options
+    }
+
