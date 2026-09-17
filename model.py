@@ -273,3 +273,53 @@ def learning_rate_comparison(X_tr, y_tr, X_te, y_te, rates):
 
     return results
 
+# Step 7 - early_stopping_and_partial_dependence
+from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.inspection import partial_dependence
+
+def hist_boosting(X, y, max_iter=500, learning_rate=0.1):
+    # Fit histogram-based gradient boosting with early stopping.
+    model = HistGradientBoostingRegressor(
+        max_iter=max_iter,
+        learning_rate=learning_rate,
+        early_stopping=True,
+        validation_fraction=0.2,
+        n_iter_no_change=20,
+        random_state=0
+    )
+
+    return model.fit(X, y)
+
+def iterations_used(model):
+    # Return the number of boosting iterations actually performed.
+    return model.n_iter_
+
+def partial_dependence_curve(model, X, feature, grid_resolution=20):
+    # Compute the partial dependence values for the specified feature.
+    result = partial_dependence(
+        model,
+        X,
+        [feature],
+        grid_resolution=grid_resolution
+    )
+
+    # Extract the grid values and averaged predictions for the single feature.
+    grid_values = result["grid_values"][0]
+    averaged_predictions = result["average"][0]
+
+    # Round both outputs to 3 decimal places and return them as lists.
+    return (
+        [round(float(value), 3) for value in grid_values],
+        [round(float(value), 3) for value in averaged_predictions]
+    )
+
+def is_monotone(values, increasing=True):
+    # Check that the sequence does not move against the requested direction
+    # by more than 0.5 between consecutive values.
+    differences = np.diff(values)
+
+    if increasing:
+        return bool(np.all(differences >= -0.5))
+
+    return bool(np.all(differences <= 0.5))
+
