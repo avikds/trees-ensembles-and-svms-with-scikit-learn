@@ -226,3 +226,50 @@ def permutation_importances(model, X, y, feature_names, n_repeats=10):
         )
     }
 
+# Step 6 - gradient_boosting
+from sklearn.ensemble import GradientBoostingRegressor
+
+def boosting(X, y, n_estimators=500, learning_rate=0.1, max_depth=3):
+    # Fit a gradient boosting regression model.
+    model = GradientBoostingRegressor(
+        n_estimators=n_estimators,
+        learning_rate=learning_rate,
+        max_depth=max_depth,
+        random_state=0
+    )
+
+    return model.fit(X, y)
+
+def staged_rmse(model, X, y):
+    # Compute the RMSE after each boosting stage.
+    return [
+        round(
+            np.sqrt(mean_squared_error(y, predictions)),
+            3
+        )
+        for predictions in model.staged_predict(X)
+    ]
+
+def best_stage(staged):
+    # Return the 1-based index of the stage with the smallest RMSE.
+    return int(np.argmin(staged)) + 1
+
+def learning_rate_comparison(X_tr, y_tr, X_te, y_te, rates):
+    # Evaluate each learning rate using the minimum staged test RMSE.
+    results = {}
+
+    for rate in rates:
+        model = boosting(
+            X_tr,
+            y_tr,
+            learning_rate=rate
+        )
+        staged = staged_rmse(model, X_te, y_te)
+
+        results[rate] = (
+            best_stage(staged),
+            min(staged)
+        )
+
+    return results
+

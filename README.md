@@ -15,6 +15,7 @@ python scaffold.py
 - [x] **3.** cost_complexity_pruning
 - [x] **4.** bagging_and_forests
 - [x] **5.** feature_importance
+- [x] **6.** gradient_boosting
 
 ---
 
