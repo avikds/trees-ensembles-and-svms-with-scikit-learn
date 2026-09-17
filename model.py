@@ -182,3 +182,47 @@ def oob_by_max_features(X, y, options):
         for option in options
     }
 
+# Step 5 - feature_importance
+from sklearn.inspection import permutation_importance
+
+def importances(model, feature_names):
+    # Pair each feature name with its model-based importance.
+    pairs = zip(feature_names, model.feature_importances_)
+
+    # Sort by decreasing importance and round values to 4 decimals.
+    return {
+        name: round(float(importance), 4)
+        for name, importance in sorted(
+            pairs,
+            key=lambda item: item[1],
+            reverse=True
+        )
+    }
+
+def top_features(model, feature_names, k):
+    # Return the first k feature names from the decreasing-importance ordering.
+    return list(importances(model, feature_names).keys())[:k]
+
+def permutation_importances(model, X, y, feature_names, n_repeats=10):
+    # Compute permutation importance with a fixed random state.
+    result = permutation_importance(
+        model,
+        X,
+        y,
+        n_repeats=n_repeats,
+        random_state=0
+    )
+
+    # Pair feature names with mean permutation importances.
+    pairs = zip(feature_names, result.importances_mean)
+
+    # Sort by decreasing importance and round values to 4 decimals.
+    return {
+        name: round(float(importance), 4)
+        for name, importance in sorted(
+            pairs,
+            key=lambda item: item[1],
+            reverse=True
+        )
+    }
+

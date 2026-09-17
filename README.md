@@ -14,6 +14,7 @@ python scaffold.py
 - [x] **2.** regression_tree
 - [x] **3.** cost_complexity_pruning
 - [x] **4.** bagging_and_forests
+- [x] **5.** feature_importance
 
 ---
 
