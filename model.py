@@ -429,3 +429,68 @@ def error_rate(model, X, y):
     predictions = model.predict(X)
     return round(float(np.mean(predictions != y)), 4)
 
+# Step 10 - kernels
+from sklearn.metrics import roc_auc_score
+
+def tune_rbf(X, y, cv):
+    # Tune C and gamma for the radial-basis-function kernel.
+    return tune_svc(
+        X,
+        y,
+        "rbf",
+        {
+            "svc__C": [0.1, 1, 10],
+            "svc__gamma": [0.01, 0.1, 1.0]
+        },
+        cv
+    )
+
+def tune_poly(X, y, cv):
+    # Tune C and polynomial degree for the polynomial kernel.
+    return tune_svc(
+        X,
+        y,
+        "poly",
+        {
+            "svc__C": [0.1, 1, 10],
+            "svc__degree": [2, 3]
+        },
+        cv
+    )
+
+def roc_auc(model, X, y):
+    # Compute ROC AUC using the SVC decision function.
+    scores = model.decision_function(X)
+
+    return round(float(roc_auc_score(y, scores)), 4)
+
+def kernel_comparison(X_tr, y_tr, X_te, y_te, cv):
+    # Tune the linear, RBF, and polynomial SVC classifiers.
+    models = {
+        "linear": tune_svc(
+            X_tr,
+            y_tr,
+            "linear",
+            {
+                "svc__C": [0.01, 0.1, 1, 10]
+            },
+            cv
+        ),
+        "rbf": tune_rbf(X_tr, y_tr, cv),
+        "poly": tune_poly(X_tr, y_tr, cv)
+    }
+
+    # Compare the tuned classifiers on training and test data.
+    comparison = {}
+
+    for kernel, model in models.items():
+        comparison[kernel] = {
+            "train_error": error_rate(model, X_tr, y_tr),
+            "test_error": error_rate(model, X_te, y_te),
+            "auc": roc_auc(model, X_te, y_te),
+            "support_vectors": n_support_vectors(model),
+            "best_params": model.best_params_
+        }
+
+    return comparison
+
