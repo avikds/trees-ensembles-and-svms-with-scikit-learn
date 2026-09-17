@@ -385,3 +385,47 @@ def oj_split(df, n_train=800, random_state=0):
 
     return X_tr, X_te, y_tr, y_te
 
+# Step 9 - linear_svc
+from sklearn.model_selection import GridSearchCV
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
+
+def svc_pipeline(kernel, **params):
+    # Standardize the features before fitting the SVC.
+    return make_pipeline(
+        StandardScaler(),
+        SVC(
+            kernel=kernel,
+            random_state=0,
+            **params
+        )
+    )
+
+def tune_svc(X, y, kernel, param_grid, cv):
+    # GridSearchCV expects the SVC parameters to be prefixed with "svc__".
+    search = GridSearchCV(
+        svc_pipeline(kernel),
+        param_grid=param_grid,
+        cv=cv
+    )
+
+    # Fit the complete grid search and return the fitted object.
+    return search.fit(X, y)
+
+def n_support_vectors(model):
+    # For GridSearchCV, inspect the best fitted pipeline.
+    if isinstance(model, GridSearchCV):
+        model = model.best_estimator_
+
+    # Extract the fitted SVC from the pipeline.
+    svc = model.named_steps["svc"]
+
+    # Total support-vector count across all classes.
+    return int(np.sum(svc.n_support_))
+
+def error_rate(model, X, y):
+    # Compute the proportion of incorrectly classified observations.
+    predictions = model.predict(X)
+    return round(float(np.mean(predictions != y)), 4)
+

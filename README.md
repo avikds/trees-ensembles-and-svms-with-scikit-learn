@@ -18,6 +18,7 @@ python scaffold.py
 - [x] **6.** gradient_boosting
 - [x] **7.** early_stopping_and_partial_dependence
 - [x] **8.** oj_data
+- [x] **9.** linear_svc
 
 ---
 
