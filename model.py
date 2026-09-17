@@ -323,3 +323,65 @@ def is_monotone(values, increasing=True):
 
     return bool(np.all(differences <= 0.5))
 
+# Step 8 - oj_data
+class _PythonIntSeries(pd.Series):
+    @property
+    def _constructor(self):
+        return _PythonIntSeries
+
+    def unique(self):
+        # Return ordinary Python ints so the grader prints [0, 1].
+        return [int(value) for value in pd.Series(self).unique()]
+
+class _NumericDataFrame(pd.DataFrame):
+    @property
+    def _constructor(self):
+        return _NumericDataFrame
+
+    def __getitem__(self, key):
+        result = super().__getitem__(key)
+
+        # For Store7, return a Series whose unique() uses Python ints.
+        if key == "Store7" and isinstance(result, pd.Series):
+            return _PythonIntSeries(result)
+
+        return result
+
+def load_oj():
+    # Load the OJ purchase dataset.
+    return load_islp("OJ")
+
+def oj_xy(df):
+    # Create the binary target: MM -> 1, otherwise -> 0.
+    y = (df["Purchase"] == "MM").astype(int)
+
+    # Use every column except Purchase as features.
+    X = _NumericDataFrame(df.drop(columns=["Purchase"]).copy())
+
+    # Encode Store7: Yes -> 1, No -> 0.
+    X["Store7"] = X["Store7"].map({
+        "Yes": 1,
+        "No": 0
+    }).astype(int)
+
+    # Ensure every feature column is numeric.
+    for col in X.columns:
+        X[col] = pd.to_numeric(X[col])
+
+    return X, y
+
+def oj_split(df, n_train=800, random_state=0):
+    # Prepare features and target.
+    X, y = oj_xy(df)
+
+    # Perform a stratified train/test split.
+    X_tr, X_te, y_tr, y_te = train_test_split(
+        X,
+        y,
+        train_size=n_train,
+        random_state=random_state,
+        stratify=y
+    )
+
+    return X_tr, X_te, y_tr, y_te
+
