@@ -20,6 +20,7 @@ python scaffold.py
 - [x] **8.** oj_data
 - [x] **9.** linear_svc
 - [x] **10.** kernels
+- [x] **11.** final_tables
 
 ---
 

@@ -494,3 +494,104 @@ def kernel_comparison(X_tr, y_tr, X_te, y_te, cv):
 
     return comparison
 
+# Step 11 - final_tables
+def regression_table(X_tr, y_tr, X_te, y_te, cv):
+    # 1. Pruned decision tree.
+    tree = pruned_tree(X_tr, y_tr, cv)
+    tree_result = (rmse(tree, X_te, y_te), tree.get_n_leaves())
+
+    # 2. Bagging with 200 trees.
+    bag = bagging(X_tr, y_tr, n_estimators=200)
+    bag_result = (rmse(bag, X_te, y_te), 200)
+
+    # 3. Random forest: choose max_features using OOB RMSE.
+    forest_options = [1.0, 0.33, "sqrt"]
+    forest_oob = oob_by_max_features(X_tr, y_tr, forest_options)
+    best_forest_option = min(
+        forest_options,
+        key=lambda option: forest_oob[option]
+    )
+
+    forest = random_forest(
+        X_tr,
+        y_tr,
+        max_features=best_forest_option,
+        n_estimators=200
+    )
+    forest_result = (
+        rmse(forest, X_te, y_te),
+        best_forest_option
+    )
+
+    # 4. Gradient boosting:
+    #    determine the best number of trees using a validation split
+    #    made only from the training data.
+    X_fit, X_val, y_fit, y_val = train_test(
+        X_tr,
+        y_tr,
+        test_size=0.25,
+        random_state=1
+    )
+
+    validation_boost = boosting(X_fit, y_fit)
+    validation_staged = staged_rmse(
+        validation_boost,
+        X_val,
+        y_val
+    )
+    best_boost_stage = best_stage(validation_staged)
+
+    # Refit boosting on the entire training set using the selected stage.
+    boost = boosting(
+        X_tr,
+        y_tr,
+        n_estimators=best_boost_stage
+    )
+    boost_result = (
+        rmse(boost, X_te, y_te),
+        best_boost_stage
+    )
+
+    # 5. Histogram-based gradient boosting with early stopping.
+    hist = hist_boosting(X_tr, y_tr)
+    hist_result = (
+        rmse(hist, X_te, y_te),
+        iterations_used(hist)
+    )
+
+    return {
+        "tree": tree_result,
+        "bagging": bag_result,
+        "forest": forest_result,
+        "boosting": boost_result,
+        "hist": hist_result
+    }
+
+def format_rows(table, metric_name):
+    # Sort models by ascending metric value.
+    rows = sorted(
+        table.items(),
+        key=lambda item: item[1][0]
+    )
+
+    # Format each row according to the required specification.
+    return [
+        f"{name:10s} {metric_name}={value:7.3f} setting={setting}"
+        for name, (value, setting) in rows
+    ]
+
+def svm_rows(cmp):
+    # Sort kernels by ascending test error.
+    rows = sorted(
+        cmp.items(),
+        key=lambda item: item[1]["test_error"]
+    )
+
+    # Format each kernel's test error, AUC, and support-vector count.
+    return [
+        f"{kernel:10s} test_error={values['test_error']:.4f} "
+        f"auc={values['auc']:.4f} "
+        f"support_vectors={values['support_vectors']}"
+        for kernel, values in rows
+    ]
+
